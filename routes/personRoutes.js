@@ -35,7 +35,36 @@ router.post('/signup',async(req, res)=>{
   }
 })
 
-router.get('/', async(req,res)=>{
+//Login Route
+router.post('/login', async(req, res)=>{
+  try{
+    //Extract username and password from request body
+    const {username, password} = req.body;
+
+    //Find the user by username
+    const user = await Person.findOne({username: username});
+
+    //If username does not exist or password does not match, return error
+    if(!user || !(await user.comparePassword(password))){
+      return res.status(401).json({error: 'Invalid username or password'});
+    }
+    //Genrate token
+    const payLoad = {
+      id: user.id,
+      username: user.username
+    }
+    const token = genrateToken(payLoad);
+
+    //return token as response
+    res.json({token});
+  }
+  catch(err){
+     console.log(err);
+     res.status(500).json({error: 'Internal Server Error'});
+  }
+});
+
+router.get('/',jwtAuthMiddlware, async(req,res)=>{
   try{
     const data = await Person.find();
     console.log('data fetched');
@@ -43,9 +72,25 @@ router.get('/', async(req,res)=>{
   }
   catch{
     console.log(err);
-    res.status(500).json({error: 'Internal Server Error'})
+    res.status(500).json({error: 'Internal Server Error'});
   }
-})
+});
+
+//Profile routes
+router.get('/Profile', async(req, res)=>{
+  try{
+    const userData = req.user;
+    console.log("User Data"+ userData);
+
+    const userId = userData.id;
+    const user = await Person.findOne(userId);
+      res.status(500).json({error: 'Internal Server Error'});
+    }
+    catch(err){
+      console.log(err);
+      res.status(500).json({error: 'Internal Server Error'});
+    }
+});
 
 router.get('/:workType',async(req,res)=>{
   try{
