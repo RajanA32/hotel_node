@@ -2,10 +2,11 @@ const express = require('express');
 const router = express.Router();
 
 const Person = require('./../models/person');
+const {jwtAuthMiddlware,genrateToken} =require('./../jwt');
 
 
 //POST route to add a person
-router.post('/',async(req, res)=>{
+router.post('/signup',async(req, res)=>{
   try{
     const data = req.body // Assuming the request body containes the person data
 
@@ -16,7 +17,17 @@ router.post('/',async(req, res)=>{
 
     const response = await newPerson.save();
     console.log('data saved')
-    res.status(200).json(response);
+
+    const payLoad = {
+      id: response.id,
+      username:response.username
+    }
+    console.log(JSON.stringify(payLoad));
+
+    const token = genrateToken(payLoad);
+    console.log("Token is :",token);
+
+    res.status(200).json({response: response, token: token});
   }
   catch(err){
     console.log(err);
